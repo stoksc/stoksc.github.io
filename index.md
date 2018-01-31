@@ -1,4 +1,4 @@
-## Welcome to whatever this is
+
 
 ____
 Journal to track my own progress as a developer as I try really hard to suck less.
