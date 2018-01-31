@@ -1,6 +1,6 @@
 ## Welcome to GitHub Pages
 
-[first post](/posts/post_1/plotmodel.md)
+[[!first post](/posts/post_1/output_9_0.png)](/posts/post_1/plotmodel.md)
 
 You can use the [editor on GitHub](https://github.com/stoksc/stoksc.github.io/edit/master/index.md) to maintain and preview the content for your website in Markdown files.
 
