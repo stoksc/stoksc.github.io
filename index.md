@@ -1,6 +1,7 @@
-## Welcome...
+## Welcome to whatever this is
 
-___
-This first post is more of a test to see this gitpage in action. Disregard or be disappointed.
-[first post](/posts/post_1/plotmodel.md)
+____
+Journal to track my own progress as a developer as I try really hard to suck less.
+____
+__08/25/2017__ - [first post](/posts/post_1/plotmodel.md)
 ___
