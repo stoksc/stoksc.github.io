@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>stoksc&#39;s blog</title>
+    <link>https://stoksc.github.io/</link>
+    <description>Recent content on stoksc&#39;s blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Wed, 29 May 2019 20:24:28 +0800</lastBuildDate>
+    
+	<atom:link href="https://stoksc.github.io/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>me</title>
+      <link>https://stoksc.github.io/about/</link>
+      <pubDate>Wed, 29 May 2019 20:24:28 +0800</pubDate>
+      
+      <guid>https://stoksc.github.io/about/</guid>
+      <description>Software Engineer @ Kabbage. Into distributed systems and Rush.</description>
+    </item>
+    
+    <item>
+      <title>Trying a bit at bitcoin</title>
+      <link>https://stoksc.github.io/posts/bitcoin_price_analysis/</link>
+      <pubDate>Sat, 30 Sep 2017 21:03:54 -0400</pubDate>
+      
+      <guid>https://stoksc.github.io/posts/bitcoin_price_analysis/</guid>
+      <description>BTC price as a function of twitter sentiment I had the idea that the sentiment of tweets containing #BTC could be an indicator for fluctuations in the price of BTC.</description>
+    </item>
+    
+  </channel>
+</rss>
