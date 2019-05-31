@@ -1,0 +1,56 @@
+baseURL = "http://stoksc.github.com/"
+languageCode = "en-us"
+title = "stoksc's blog"
+theme = "zozo"
+publishDir = "docs"
+hasCJKLanguage = true                # has chinese/japanese/korean ? # 自动检测是否包含 中文\日文\韩文
+summaryLength = 25
+paginate = 4                         # shows the number of articles  # 首页显示文章数量
+enableEmoji = true
+googleAnalytics = ""                 # your google analytics id
+disqusShortname = ""                 # your discuss shortname
+
+[author]                             # essential                     # 必需
+  name = "Bradley Laney"
+
+[blackfriday]
+  smartypants = false
+
+[[menu.main]]                        # config your menu  # 配置菜单
+  name = "home"
+  weight = 10
+  identifier = "home"
+  url = "/"
+[[menu.main]]
+  name = "posts"
+  weight = 20
+  identifier = "archive"
+  url = "/posts/"
+[[menu.main]]
+  name = "tags"
+  weight = 30
+  identifier = "tags"
+  url = "/tags/"
+[[menu.main]]
+  name = "about"
+  weight = 40
+  identifier = "about"
+  url = "/about/"
+
+[params]
+  subTitle = "stoksc's blog"                                       # site's subTitle  # 网站二级标题
+  footerSlogan = "Thanks for visiting"                                          # site's footer slogan  # 网站页脚标语
+  keywords = ["bradley", "laney", "sucks"]                                  # site's keywords  # 网站关键字
+  description = "tumbleweed town."                        # site's description  # 网站描述
+
+# mathjax
+  enableMathJax = true                                                 # enable mathjax  # 是否使用mathjax（数学公式）
+
+  enableSummary = true                                                 # display the article summary  # 是否显示文章摘要
+
+
+[social]
+  github = "https://github.com/stoksc"
+  gitlab = "https://gitlab.com/stoksc"
+  twitter = "https://twitter.com/stoked_"
+  linkedin = "https://linkedin.com/in/bradleylaney"
