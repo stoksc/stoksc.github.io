@@ -1,0 +1,302 @@
+<!doctype html>
+<html>
+  <head>
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="/script.js"></script>
+  </head>
+  <body>
+    <header-bar></header-bar>
+    <p>
+      note: when i wrote this, i was an idiot. though, i still am an idiot, probably more so. maybe... just navigate
+      away entirely.
+    </p>
+    <h4 id="btc-price-as-a-function-of-twitter-sentiment">BTC price as a function of twitter sentiment</h4>
+    <p>
+      I had the idea that the sentiment of tweets containing #BTC could be an indicator for fluctuations in the price of
+      BTC. I started by writing the python program
+      <a href="https://github.com/stoksc/ccpredict/blob/master/preprocessing.py" title="twitter data getter"
+        >preprocessing.py</a
+      >. This program gathers tweets from using a Tweepy stream listener and then scores them all individually after
+      some cleaning up and exports the scores and percent change in BTC price, along with some other stuff. Used some
+      code from this
+      <a href="https://marcobonzanini.com/2015/03/02/mining-twitter-data-with-python-part-1/">blog post</a>
+      to get started.
+    </p>
+    <p>
+      The heart of my idea was that percent change is proportional to sentiment. I also had a hunch that the volume in a
+      time period would amplify the dependency on sentiment so that percent change is proportional to sentiment times
+      tweet volume. And this is a really simple idea about something so complicated; I imagine it is bound to be wrong
+      but python facilitates testing these ideas with only small time investments.
+    </p>
+    <p>First, I decided to plot the data gathered to see if there was a correlation.</p>
+    <div class="sourceCode" id="cb3">
+      <pre class="sourceCode python"><code class="sourceCode python">
+  <span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
+  <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pickle</span>
+  <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+  <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib</span>
+  <span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+  <span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
+  <span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> <span class="bu">open</span>(os.getcwd() <span class="op">+</span> <span class="st">&#39;</span><span class="ch">\\</span><span class="st">&#39;</span> <span class="op">+</span> <span class="st">&#39;btc_data.txt&#39;</span>, <span class="st">&#39;rb&#39;</span>) <span class="im">as</span> f:</span>
+  <span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    btc_data <span class="op">=</span> pickle.load(f)</span>
+  <span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    polarity <span class="op">=</span> np.array([])</span>
+  <span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    percent_chg <span class="op">=</span> np.array([])</span>
+  <span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    tweet_volume <span class="op">=</span> np.array([])</span>
+  <span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>    start_times <span class="op">=</span> np.array([])</span>
+  <span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>    end_times <span class="op">=</span> np.array([])</span>
+  <span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="bu">len</span>(btc_data) <span class="op">%</span> <span class="dv">2</span>) <span class="op">==</span> <span class="dv">1</span>:</span>
+  <span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>        btc_data <span class="op">=</span> btc_data[<span class="dv">1</span>::]</span>
+  <span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> entry <span class="kw">in</span> btc_data:</span>
+  <span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> entry[<span class="st">&#39;start time&#39;</span>] <span class="op">&lt;</span> <span class="dv">1510197000</span>:</span>
+  <span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>            polarity <span class="op">=</span> np.append(polarity, entry[<span class="st">&#39;polarity&#39;</span>])</span>
+  <span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>            percent_chg <span class="op">=</span> np.append(percent_chg, entry[<span class="st">&#39;percent change&#39;</span>])</span>
+  <span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>            tweet_volume <span class="op">=</span> np.append(tweet_volume, entry[<span class="st">&#39;tweet volume&#39;</span>])</span>
+  <span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>            start_times <span class="op">=</span> np.append(start_times, entry[<span class="st">&#39;start time&#39;</span>])</span>
+  <span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>            end_times <span class="op">=</span> np.append(end_times, entry[<span class="st">&#39;end time&#39;</span>])</span>
+  <span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a></span>
+  <span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>plt.scatter(polarity, percent_chg, s<span class="op">=</span>tweet_volume, alpha<span class="op">=</span><span class="fl">0.5</span>, color<span class="op">=</span><span class="st">&#39;#5f9ea0&#39;</span>)</span>
+  <span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>x_min, x_max <span class="op">=</span> np.amin(polarity), np.amax(polarity)</span>
+  <span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>y_min, y_max <span class="op">=</span> np.amin(percent_chg), np.amax(percent_chg)</span>
+  <span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>plt.title(<span class="st">&#39;for 1 minute time intervals, (x, y) = (avg sentiment of tweets with #BTC, percent change BTC in USD)&#39;</span>)</span>
+  <span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">&#39;polarity&#39;</span>)</span>
+  <span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>plt.xlim(<span class="fl">1.1</span><span class="op">*</span>x_min, <span class="fl">1.1</span><span class="op">*</span>x_max)</span>
+  <span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">&#39;percent change&#39;</span>)</span>
+  <span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>plt.ylim(<span class="fl">1.1</span><span class="op">*</span>y_min, <span class="fl">1.1</span><span class="op">*</span>y_max)</span>
+  <span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>matplotlib.rcParams[<span class="st">&#39;figure.figsize&#39;</span>] <span class="op">=</span> [<span class="fl">15.0</span>, <span class="fl">10.0</span>]</span>
+  <span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre>
+    </div>
+    <figure>
+      <img src="output_1_0.png" alt="png" />
+      <figcaption aria-hidden="true">png</figcaption>
+    </figure>
+    <p>
+      So, unfortunately, there isn't really any strong correlation but I wanted to play with tensorflow a bit anyway so
+      I read through the
+      <a href="https://www.tensorflow.org/get_started/get_started">getting started</a>. I borrowed and altered (barely)
+      some code to model the relationship I described above and find the proportionality constants.
+    </p>
+    <div class="sourceCode" id="cb4">
+      <pre class="sourceCode python"><code class="sourceCode python">
+  <span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> tensorflow <span class="im">as</span> tf</span>
+  <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+  <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> <span class="kw">not</span> np.<span class="bu">any</span>(np.isnan(polarity))</span>
+  <span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> <span class="kw">not</span> np.<span class="bu">any</span>(np.isnan(percent_chg))</span>
+  <span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> <span class="kw">not</span> np.<span class="bu">any</span>(np.isnan(tweet_volume))</span>
+  <span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
+  <span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> model_fn(features, labels, mode):</span>
+  <span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    W <span class="op">=</span> tf.get_variable(<span class="st">&quot;W&quot;</span>, [<span class="dv">1</span>], dtype<span class="op">=</span>tf.float64)</span>
+  <span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    b <span class="op">=</span> tf.get_variable(<span class="st">&quot;b&quot;</span>, [<span class="dv">1</span>], dtype<span class="op">=</span>tf.float64)</span>
+  <span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    y <span class="op">=</span> W<span class="op">*</span>features[<span class="st">&#39;x1&#39;</span>] <span class="op">+</span> b</span>
+  <span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    loss <span class="op">=</span> tf.reduce_sum(tf.square(y <span class="op">-</span> labels))</span>
+  <span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>    global_step <span class="op">=</span> tf.train.get_global_step()</span>
+  <span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>    optimizer <span class="op">=</span> tf.train.GradientDescentOptimizer(<span class="fl">0.01</span>)</span>
+  <span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>    train <span class="op">=</span> tf.group(optimizer.minimize(loss),</span>
+  <span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>                   tf.assign_add(global_step, <span class="dv">1</span>))</span>
+  <span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> tf.estimator.EstimatorSpec(</span>
+  <span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>        mode<span class="op">=</span>mode,</span>
+  <span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>        predictions<span class="op">=</span>y,</span>
+  <span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>        loss<span class="op">=</span>loss,</span>
+  <span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>        train_op<span class="op">=</span>train)</span>
+  <span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a></span>
+  <span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>tf.logging.set_verbosity(tf.logging.ERROR)</span>
+  <span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a></span>
+  <span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>estimator <span class="op">=</span> tf.estimator.Estimator(model_fn<span class="op">=</span>model_fn)</span>
+  <span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>x1_train <span class="op">=</span> polarity</span>
+  <span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>y_train <span class="op">=</span> percent_chg</span>
+  <span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>input_fn <span class="op">=</span> tf.estimator.inputs.numpy_input_fn(</span>
+  <span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>    {<span class="st">&quot;x1&quot;</span>: x1_train}, y_train, batch_size<span class="op">=</span><span class="dv">4</span>, num_epochs<span class="op">=</span><span class="va">None</span>, shuffle<span class="op">=</span><span class="va">True</span>)</span>
+  <span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>train_input_fn <span class="op">=</span> tf.estimator.inputs.numpy_input_fn(</span>
+  <span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>    {<span class="st">&quot;x1&quot;</span>: x1_train}, y_train, batch_size<span class="op">=</span><span class="dv">4</span>, num_epochs<span class="op">=</span><span class="dv">1000</span>, shuffle<span class="op">=</span><span class="va">False</span>)</span>
+  <span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a></span>
+  <span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>estimator.train(input_fn<span class="op">=</span>input_fn, steps<span class="op">=</span><span class="dv">1000</span>)</span>
+  <span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>train_metrics <span class="op">=</span> estimator.evaluate(input_fn<span class="op">=</span>train_input_fn)</span>
+  <span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">&quot;train loss: </span><span class="sc">%r</span><span class="st">&quot;</span><span class="op">%</span> train_metrics[<span class="st">&#39;loss&#39;</span>])</span>
+  <span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a>W, b <span class="op">=</span> estimator.get_variable_value(<span class="st">&#39;W&#39;</span>)[<span class="dv">0</span>],  estimator.get_variable_value(<span class="st">&#39;b&#39;</span>)[<span class="dv">0</span>]</span>
+  <span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">&#39;y = </span><span class="sc">{}</span><span class="st">*x1 + </span><span class="sc">{}</span><span class="st">&#39;</span>.<span class="bu">format</span>(W, b))</span>
+  <span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a></span>
+  <span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a>y1 <span class="op">=</span> W<span class="op">*</span>x_min <span class="op">+</span> b</span>
+  <span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a>y2 <span class="op">=</span> W<span class="op">*</span>x_max <span class="op">+</span> b</span>
+  <span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a>plt.scatter(polarity, percent_chg, s<span class="op">=</span>tweet_volume, alpha<span class="op">=</span><span class="fl">0.5</span>, color<span class="op">=</span><span class="st">&#39;#5f9ea0&#39;</span>)</span>
+  <span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a>plt.plot([x_min, x_max], [y1, y2], color<span class="op">=</span><span class="st">&#39;#fa8072&#39;</span>, linestyle<span class="op">=</span><span class="st">&#39;-&#39;</span>, linewidth<span class="op">=</span><span class="dv">2</span>)</span>
+  <span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">&#39;polarity&#39;</span>)</span>
+  <span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a>plt.xlim(<span class="fl">1.1</span><span class="op">*</span>x_min, <span class="fl">1.1</span><span class="op">*</span>x_max)</span>
+  <span id="cb4-44"><a href="#cb4-44" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">&#39;percent change&#39;</span>)</span>
+  <span id="cb4-45"><a href="#cb4-45" aria-hidden="true" tabindex="-1"></a>plt.ylim(<span class="fl">1.1</span><span class="op">*</span>y_min, <span class="fl">1.1</span><span class="op">*</span>y_max)</span>
+  <span id="cb4-46"><a href="#cb4-46" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre>
+    </div>
+    <pre><code>train loss: 0.00033625914
+  y = 0.1921803505396604*x1 + -0.014125128765346454</code></pre>
+    <figure>
+      <img src="output_3_1.png" alt="png" />
+      <figcaption aria-hidden="true">png</figcaption>
+    </figure>
+    <p>
+      Any what I was expecting, a random line to go with the noise I'm calling 'data'. But I got to play with tensorflow
+      a bit.
+    </p>
+    <p>I tried to find a relation with the idea of polarity times tweet volume using the model_fn</p>
+    <pre><code>y = W*features[&#39;x1&#39;]*features[&#39;x2&#39;] + b</code></pre>
+    <p>
+      passing tweet_volume but the model kept diverging. I didn't have much time so I just stuck to linear regression
+      with one feature, polarity. And with this, the model converges to a different line almost every run; meaning the
+      dataset is more random than anything else.
+    </p>
+    <p>
+      Then the bright idea came to me, maybe there is a correlation but they are just out of phase so I normalized the
+      values to the interval [0, 1] and plotted them both together against time to see if I could see anything.
+    </p>
+    <div class="sourceCode" id="cb7">
+      <pre
+        class="sourceCode python"
+      ><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> normalize(np_arr):</span>
+  <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    arr_min <span class="op">=</span> np.amin(np_arr)</span>
+  <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    np_arr <span class="op">-=</span> arr_min</span>
+  <span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    np_arr <span class="op">/=</span> np.amax(np_arr <span class="op">-</span> np.amin(np_arr))</span>
+  <span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np_arr</span>
+  <span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a></span>
+  <span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>polarity <span class="op">=</span> normalize(polarity)</span>
+  <span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>percent_chg <span class="op">=</span> normalize(percent_chg)</span>
+  <span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>polline, <span class="op">=</span> plt.plot(start_times, polarity, color<span class="op">=</span><span class="st">&#39;#5f9ea0&#39;</span>, label<span class="op">=</span><span class="st">&#39;polarity&#39;</span>)</span>
+  <span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>prcline, <span class="op">=</span> plt.plot(start_times, percent_chg, color<span class="op">=</span><span class="st">&#39;#bc8f8f&#39;</span>, label<span class="op">=</span><span class="st">&#39;percent change&#39;</span>)</span>
+  <span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">&#39;time&#39;</span>)</span>
+  <span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">&#39;normalized polarity/percent change&#39;</span>)</span>
+  <span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>plt.legend(handles<span class="op">=</span>[polline, prcline])</span>
+  <span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre>
+    </div>
+    <figure>
+      <img src="output_5_0.png" alt="png" />
+      <figcaption aria-hidden="true">png</figcaption>
+    </figure>
+    <p>So, uh... not too obvious?</p>
+    <p>
+      But that just leads me to a more interesting problem: calculating the phase difference of two signals. I could
+      find the how similar the signals are by finding the distance between their fourier transforms. If they would
+      decompose into the frequency domain this might work well but the randomness of the patterns made me believe they
+      wouldn't.
+    </p>
+    <p>
+      I decided to run the two signals at each other and minimize the square difference. It has to be normalized or else
+      the iteration where only one point is overlapping would have the least square. To normalize it, I divide the total
+      square difference by the number of overlapping points.
+    </p>
+    <p>
+      This is sort of like the minimum of the convolution of the two functions with the same sort of normalization
+      (dividing by the length of overlap as we convolve the singals).
+    </p>
+    <div class="sourceCode" id="cb8">
+      <pre
+        class="sourceCode python"
+      ><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> nconvolve(a1, a2, starting_overlap):</span>
+  <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    shapes <span class="op">=</span> s1, s2 <span class="op">=</span> a1.shape[<span class="dv">0</span>], a2.shape[<span class="dv">0</span>]</span>
+  <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    a1_l <span class="op">=</span> s1 <span class="op">-</span> starting_overlap</span>
+  <span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    a1_r <span class="op">=</span> s1</span>
+  <span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    a2_l <span class="op">=</span> <span class="dv">0</span></span>
+  <span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    a2_r <span class="op">=</span> starting_overlap</span>
+  <span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    least_distance <span class="op">=</span> <span class="dv">1000</span></span>
+  <span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>    notDone <span class="op">=</span> <span class="va">True</span></span>
+  <span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span> notDone:</span>
+  <span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>        a12 <span class="op">=</span> np.column_stack((a1[a1_l:a1_r], a2[a2_l:a2_r]))</span>
+  <span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>        overlap <span class="op">=</span> <span class="bu">len</span>(a12)</span>
+  <span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>        distance <span class="op">=</span> <span class="dv">0</span></span>
+  <span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> pair <span class="kw">in</span> a12:</span>
+  <span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>            distance <span class="op">+=</span> (pair[<span class="dv">0</span>] <span class="op">-</span> pair[<span class="dv">1</span>])<span class="op">**</span><span class="dv">2</span></span>
+  <span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>        distance <span class="op">/=</span> overlap</span>
+  <span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> distance <span class="op">&lt;</span> least_distance:</span>
+  <span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>            least_distance <span class="op">=</span> distance</span>
+  <span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>            la1_l <span class="op">=</span> a1_l</span>
+  <span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>            la1_r <span class="op">=</span> a1_r</span>
+  <span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>            la2_l <span class="op">=</span> a2_l</span>
+  <span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>            la2_r <span class="op">=</span> a2_r</span>
+  <span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> a1_l <span class="op">==</span> <span class="dv">0</span>:</span>
+  <span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>            a1_r <span class="op">-=</span> <span class="dv">1</span></span>
+  <span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>            a2_l <span class="op">+=</span> <span class="dv">1</span></span>
+  <span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> a1_r <span class="op">&lt;</span> starting_overlap:</span>
+  <span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a>                notDone <span class="op">=</span> <span class="va">False</span></span>
+  <span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> a1_l <span class="op">&gt;</span> <span class="dv">0</span>:</span>
+  <span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a>            a1_l <span class="op">-=</span> <span class="dv">1</span></span>
+  <span id="cb8-29"><a href="#cb8-29" aria-hidden="true" tabindex="-1"></a>            a2_r <span class="op">+=</span> <span class="dv">1</span></span>
+  <span id="cb8-30"><a href="#cb8-30" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> (la1_l, la1_r, la2_l, la2_r, least_distance)</span>
+  <span id="cb8-31"><a href="#cb8-31" aria-hidden="true" tabindex="-1"></a></span>
+  <span id="cb8-32"><a href="#cb8-32" aria-hidden="true" tabindex="-1"></a>minimum_overlap <span class="op">=</span> <span class="bu">int</span>(<span class="bu">len</span>(polarity)<span class="op">/</span><span class="dv">2</span>)</span>
+  <span id="cb8-33"><a href="#cb8-33" aria-hidden="true" tabindex="-1"></a>rs <span class="op">=</span> nconvolve(polarity, percent_chg, minimum_overlap)</span>
+  <span id="cb8-34"><a href="#cb8-34" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">&#39;polarity[</span><span class="sc">{}</span><span class="st">:</span><span class="sc">{}</span><span class="st">] seems to fit percent_chg[</span><span class="sc">{}</span><span class="st">:</span><span class="sc">{}</span><span class="st">] with a square difference of </span><span class="sc">{}</span><span class="st">.&#39;</span>.<span class="bu">format</span>(rs[<span class="dv">0</span>],rs[<span class="dv">1</span>],rs[<span class="dv">2</span>],rs[<span class="dv">3</span>],rs[<span class="dv">4</span>]))</span></code></pre>
+    </div>
+    <pre><code>polarity[0:151] seems to fit percent_chg[19:170] with a square difference of 0.05992873700132932.</code></pre>
+    <p>
+      It seems that polarity lags behind percent change by about 19 minutes. However, after looking at the list of
+      square differences, this is only about 50% better than the average square difference, which isn't too convincing.
+      I also added in a starting overlap amount to make sure the result was meaningful (which I think I've begun to lose
+      altogether, already).
+    </p>
+    <div class="sourceCode" id="cb10">
+      <pre class="sourceCode python"><code class="sourceCode python">
+  <span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>polarity_shift <span class="op">=</span> polarity[rs[<span class="dv">0</span>]:rs[<span class="dv">1</span>]]</span>
+  <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>percent_chg_shift <span class="op">=</span> percent_chg[rs[<span class="dv">2</span>]:rs[<span class="dv">3</span>]]</span>
+  <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>start_times_shift <span class="op">=</span> start_times[rs[<span class="dv">0</span>]:rs[<span class="dv">1</span>]]</span>
+  <span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>tv_shift <span class="op">=</span> tweet_volume[rs[<span class="dv">0</span>]:rs[<span class="dv">1</span>]]</span>
+  <span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>polline, <span class="op">=</span> plt.plot(start_times_shift, polarity_shift, color<span class="op">=</span><span class="st">&#39;#5f9ea0&#39;</span>, label<span class="op">=</span><span class="st">&#39;shifted normalized polarity&#39;</span>)</span>
+  <span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>prcline, <span class="op">=</span> plt.plot(start_times_shift, percent_chg_shift, color<span class="op">=</span><span class="st">&#39;#bc8f8f&#39;</span>, label<span class="op">=</span><span class="st">&#39;shifted normalized percent change&#39;</span>)</span>
+  <span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">&#39;time&#39;</span>)</span>
+  <span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">&#39;shifted normalized polarity/percent change&#39;</span>)</span>
+  <span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>plt.legend(handles<span class="op">=</span>[polline, prcline])</span>
+  <span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre>
+    </div>
+    <figure>
+      <img src="output_9_0.png" alt="png" />
+      <figcaption aria-hidden="true">png</figcaption>
+    </figure>
+    <p>
+      But, hey! Look at that, those big peaks happened to line up so that's pretty cool. But I'm not fooling myself. But
+      I want to leave the time domain and see if there's a more obvious linear correlation between the shifted polarity
+      and percent change.
+    </p>
+    <div class="sourceCode" id="cb11">
+      <pre class="sourceCode python"><code class="sourceCode python">
+  <span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>estimator <span class="op">=</span> tf.estimator.Estimator(model_fn<span class="op">=</span>model_fn)</span>
+  <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a></span>
+  <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>x_train <span class="op">=</span> polarity_shift</span>
+  <span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>y_train <span class="op">=</span> percent_chg_shift</span>
+  <span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>input_fn <span class="op">=</span> tf.estimator.inputs.numpy_input_fn(</span>
+  <span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    {<span class="st">&quot;x1&quot;</span>: x_train}, y_train, batch_size<span class="op">=</span><span class="dv">4</span>, num_epochs<span class="op">=</span><span class="va">None</span>, shuffle<span class="op">=</span><span class="va">True</span>)</span>
+  <span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>train_input_fn <span class="op">=</span> tf.estimator.inputs.numpy_input_fn(</span>
+  <span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>    {<span class="st">&quot;x1&quot;</span>: x_train}, y_train, batch_size<span class="op">=</span><span class="dv">4</span>, num_epochs<span class="op">=</span><span class="dv">1000</span>, shuffle<span class="op">=</span><span class="va">False</span>)</span>
+  <span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a></span>
+  <span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>estimator.train(input_fn<span class="op">=</span>input_fn, steps<span class="op">=</span><span class="dv">1000</span>)</span>
+  <span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a></span>
+  <span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>train_metrics <span class="op">=</span> estimator.evaluate(input_fn<span class="op">=</span>train_input_fn)</span>
+  <span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">&quot;train metrics: </span><span class="sc">%r</span><span class="st">&quot;</span><span class="op">%</span> train_metrics)</span>
+  <span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>W, b <span class="op">=</span> estimator.get_variable_value(<span class="st">&#39;W&#39;</span>)[<span class="dv">0</span>],  estimator.get_variable_value(<span class="st">&#39;b&#39;</span>)[<span class="dv">0</span>]</span>
+  <span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">&#39;y = </span><span class="sc">{}</span><span class="st">*x1 + </span><span class="sc">{}</span><span class="st">&#39;</span>.<span class="bu">format</span>(W, b))</span>
+  <span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a></span>
+  <span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>y1 <span class="op">=</span> W<span class="op">*</span>x_min <span class="op">+</span> b</span>
+  <span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>y2 <span class="op">=</span> W<span class="op">*</span>x_max <span class="op">+</span> b</span>
+  <span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>plt.scatter(polarity_shift, percent_chg_shift, s<span class="op">=</span>tweet_volume, alpha<span class="op">=</span><span class="fl">0.5</span>, color<span class="op">=</span><span class="st">&#39;#5f9ea0&#39;</span>)</span>
+  <span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>plt.plot([<span class="dv">0</span>, <span class="dv">1</span>], [y1, y2], color<span class="op">=</span><span class="st">&#39;#fa8072&#39;</span>, linestyle<span class="op">=</span><span class="st">&#39;-&#39;</span>, linewidth<span class="op">=</span><span class="dv">2</span>)</span>
+  <span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a>plt.title(<span class="st">&#39;shifted normalized percent change vs shifted normalized polarity&#39;</span>)</span>
+  <span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">&#39;shifted normalized polarity&#39;</span>)</span>
+  <span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a>plt.xlim(<span class="dv">0</span>, <span class="dv">1</span>)</span>
+  <span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">&#39;shifted normalized percent change&#39;</span>)</span>
+  <span id="cb11-25"><a href="#cb11-25" aria-hidden="true" tabindex="-1"></a>plt.ylim(<span class="dv">0</span>, <span class="dv">1</span>)</span>
+  <span id="cb11-26"><a href="#cb11-26" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre>
+    </div>
+    <pre><code>train metrics: {&#39;loss&#39;: 0.11034768, &#39;global_step&#39;: 1000}
+  y = 0.41588630003169313*x1 + 0.370582965071245</code></pre>
+    <figure>
+      <img src="output_11_1.png" alt="png" />
+      <figcaption aria-hidden="true">png</figcaption>
+    </figure>
+    <h3 id="conclusion">Conclusion</h3>
+    <p>
+      And it's almost no better than it was. Still not anything to bet on - which was sort of the goal. I think it would
+      give more conclusive results if I had more data and better data; I don't think the process I worked through in
+      this notebook was inherently bad.
+    </p>
+    <p>
+      I may go back in the future to
+      <a href="https://github.com/stoksc/ccpredict/blob/master/preprocessing.py">preprocessing.py</a>
+      and change what data I'm gathering (adding new features), let it gather much longer and for more time intervals (1
+      minute/10 minute intervals were all I tried here) and alter the way I'm doing the sentiment analysis (I think it's
+      pretty bad). But for now, finals are approaching.
+    </p>
+  </body>
+</html>

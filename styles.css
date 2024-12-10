@@ -1,0 +1,48 @@
+@import url("https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;700&display=swap");
+
+body {
+  font-family: "Fira Code";
+  font-size: small;
+  background-color: #fafafa;
+  color: #242529;
+}
+
+@media (prefers-color-scheme: light) {
+  body {
+    background-color: #fafafa;
+    color: #242529;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    background-color: #282c33;
+    color: #acb2be;
+  }
+
+  a:hover {
+    color: cyan;
+  }
+  a {
+    color: cyan;
+  }
+  a:visited {
+    color: cyan;
+  }
+  a:active {
+    color: cyan;
+  }
+}
+
+ul {
+  margin-top: 0px;
+  padding-left: 20px;
+}
+
+p {
+  margin-top: 0px;
+}
+
+h4 {
+  margin-bottom: 0px;
+}
